@@ -4,8 +4,8 @@ import com.mateus.todolist.controller.TaskController;
 import com.mateus.todolist.domain.Task;
 import com.mateus.todolist.dto.TaskDto;
 import com.mateus.todolist.exception.TaskNotFoundException;
+import com.mateus.todolist.mapper.TaskMapper;
 import com.mateus.todolist.repository.TaskRepository;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +20,9 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 public class TaskService {
     @Autowired
     TaskRepository taskRepository;
+
+    @Autowired
+    TaskMapper taskMapper;
 
     public List<Task> findAll() {
         var listTask = taskRepository.findAll();
@@ -41,16 +44,14 @@ public class TaskService {
 
 
     public Task save(TaskDto taskDto) {
-        var task = new Task();
-        BeanUtils.copyProperties(taskDto, task);
+        var task = taskMapper.toTask(taskDto);
         return taskRepository.save(task);
     }
 
     public Task update(Long id, TaskDto taskDto) {
-        Task taskToUpdate = findById(id);
-        taskToUpdate.setDescription(taskDto.description());
-        taskToUpdate.setTitle(taskDto.title());
-        taskToUpdate.setTaskStatus(taskDto.taskStatus());
+        findById(id); // throws TaskNotFound to validate that the task exists
+        Task taskToUpdate = taskMapper.toTask(taskDto);
+        taskToUpdate.setId(id);
         return taskRepository.save(taskToUpdate);
     }
 
