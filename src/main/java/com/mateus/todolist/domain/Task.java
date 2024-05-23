@@ -2,10 +2,11 @@ package com.mateus.todolist.domain;
 
 import com.mateus.todolist.domain.enums.TaskStatus;
 import jakarta.persistence.*;
+import org.springframework.hateoas.RepresentationModel;
 
 @Entity(name = "task")
 @Table(name = "tb_task")
-public class Task {
+public class Task extends RepresentationModel<Task> {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

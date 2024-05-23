@@ -1,5 +1,6 @@
 package com.mateus.todolist.service;
 
+import com.mateus.todolist.controller.TaskController;
 import com.mateus.todolist.domain.Task;
 import com.mateus.todolist.dto.TaskDto;
 import com.mateus.todolist.exception.TaskNotFoundException;
@@ -10,6 +11,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Service
 public class TaskService {
@@ -17,14 +22,21 @@ public class TaskService {
     TaskRepository taskRepository;
 
     public List<Task> findAll() {
-        return taskRepository.findAll();
+        var listTask = taskRepository.findAll();
+        listTask = listTask.stream()
+                .map((x) -> x.add
+                        (linkTo(methodOn(TaskController.class).getOneTask(x.getId())).withSelfRel())
+                ).collect(Collectors.toList());
+        return listTask;
     }
     
     public Task findById(Long id) {
         Optional<Task> optionalTask = taskRepository.findById(id);
         if (optionalTask.isEmpty())
             throw new TaskNotFoundException();
-        return optionalTask.get();
+        Task task = optionalTask.get();
+        task.add(linkTo(methodOn(TaskController.class).getAll()).withRel("List of tasks"));
+        return task;
     }
 
 
