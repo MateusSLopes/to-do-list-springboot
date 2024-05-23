@@ -16,7 +16,7 @@ public class Task {
     @Column(length = 255)
     private String description;
 
-    @Enumerated(EnumType.STRING)
+    @Column(name = "task_status") @Enumerated(EnumType.STRING)
     private TaskStatus taskStatus;
 
     public Long getId() {

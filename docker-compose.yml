@@ -1,10 +1,10 @@
 version: "3.7"
 services:
-  db:
+  to_do_list:
     image: mysql:8.0.33
     restart: always
     environment:
-      MYSQL_DATABASE: 'db'
+      MYSQL_DATABASE: 'to_do_list'
       MYSQL_USER: 'user'
       MYSQL_PASSWORD : 'password'
       MYSQL_ROOT_PASSWORD: 'password'
