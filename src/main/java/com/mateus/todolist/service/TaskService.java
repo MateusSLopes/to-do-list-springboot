@@ -3,15 +3,18 @@ package com.mateus.todolist.service;
 import com.mateus.todolist.controller.TaskController;
 import com.mateus.todolist.domain.Task;
 import com.mateus.todolist.dto.TaskDto;
+import com.mateus.todolist.dto.TaskPageDto;
 import com.mateus.todolist.exception.TaskNotFoundException;
 import com.mateus.todolist.mapper.TaskMapper;
 import com.mateus.todolist.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -24,21 +27,14 @@ public class TaskService {
     @Autowired
     TaskMapper taskMapper;
 
-    public List<Task> findAll() {
-        var listTask = taskRepository.findAll();
-        listTask = listTask.stream()
-                .map((x) -> x.add
-                        (linkTo(methodOn(TaskController.class).getOneTask(x.getId())).withSelfRel())
-                ).collect(Collectors.toList());
-        return listTask;
-    }
+
     
     public Task findById(Long id) {
         Optional<Task> optionalTask = taskRepository.findById(id);
         if (optionalTask.isEmpty())
             throw new TaskNotFoundException();
         Task task = optionalTask.get();
-        task.add(linkTo(methodOn(TaskController.class).getAll()).withRel("List of tasks"));
+        task.add(linkTo(methodOn(TaskController.class).getTasks(PageRequest.of(0,10))).withRel("List of tasks"));
         return task;
     }
 
@@ -59,4 +55,12 @@ public class TaskService {
         var task = findById(id);
         taskRepository.delete(task);
     }
+
+    public TaskPageDto getTasks(Pageable pageable) {
+        Page<Task> page = taskRepository.findAll(pageable);
+        List<Task> taskList = page.get().map(x -> x.add(
+                linkTo(methodOn(TaskController.class).getOneTask(x.getId())).withSelfRel())).toList();
+        return new TaskPageDto(taskList, page.getTotalPages(), page.getTotalElements());
+    }
+
 }
