@@ -10,7 +10,6 @@ import com.mateus.todolist.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,13 +27,12 @@ public class TaskService {
     TaskMapper taskMapper;
 
 
-    
     public Task findById(Long id) {
         Optional<Task> optionalTask = taskRepository.findById(id);
         if (optionalTask.isEmpty())
             throw new TaskNotFoundException();
         Task task = optionalTask.get();
-        task.add(linkTo(methodOn(TaskController.class).getTasks(PageRequest.of(0,10))).withRel("List of tasks"));
+        task.add(linkTo(methodOn(TaskController.class).getTasks(0, 10)).withRel("List of tasks"));
         return task;
     }
 
@@ -56,11 +54,10 @@ public class TaskService {
         taskRepository.delete(task);
     }
 
-    public TaskPageDto getTasks(Pageable pageable) {
-        Page<Task> page = taskRepository.findAll(pageable);
-        List<Task> taskList = page.get().map(x -> x.add(
+    public TaskPageDto getTasks(int page, int pageSize) {
+        Page<Task> taskPage = taskRepository.findAll(PageRequest.of(page, pageSize));
+        List<Task> taskList = taskPage.get().map(x -> x.add(
                 linkTo(methodOn(TaskController.class).getOneTask(x.getId())).withSelfRel())).toList();
-        return new TaskPageDto(taskList, page.getTotalPages(), page.getTotalElements());
+        return new TaskPageDto(taskList, taskPage.getTotalPages(), taskPage.getTotalElements());
     }
-
 }

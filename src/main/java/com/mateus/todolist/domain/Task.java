@@ -17,8 +17,8 @@ public class Task extends RepresentationModel<Task> {
     @Column(length = 255)
     private String description;
 
-    @Column(name = "task_status") @Enumerated(EnumType.STRING)
-    private TaskStatus taskStatus;
+    @Column(name = "task_status")
+    private Integer taskStatus;
 
     public Long getId() {
         return id;
@@ -45,11 +45,13 @@ public class Task extends RepresentationModel<Task> {
     }
 
     public TaskStatus getTaskStatus() {
-        return taskStatus;
+        return TaskStatus.valueOf(taskStatus);
     }
 
     public void setTaskStatus(TaskStatus taskStatus) {
-        this.taskStatus = taskStatus;
+        if (taskStatus != null) {
+            this.taskStatus = taskStatus.getCode();
+        }
     }
 
 
