@@ -1,6 +1,7 @@
 package com.mateus.todolist.domain;
 
 import com.mateus.todolist.domain.enums.TaskStatus;
+import com.mateus.todolist.dto.TaskDto;
 import jakarta.persistence.*;
 import org.springframework.hateoas.RepresentationModel;
 
@@ -53,7 +54,6 @@ public class Task extends RepresentationModel<Task> {
             this.taskStatus = taskStatus.getCode();
         }
     }
-
 
     public static final class TaskBuilder {
         private Long id;

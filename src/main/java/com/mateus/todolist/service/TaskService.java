@@ -7,6 +7,7 @@ import com.mateus.todolist.dto.TaskPageDto;
 import com.mateus.todolist.exception.TaskNotFoundException;
 import com.mateus.todolist.mapper.TaskMapper;
 import com.mateus.todolist.repository.TaskRepository;
+import jakarta.validation.constraints.Max;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,7 +55,7 @@ public class TaskService {
         taskRepository.delete(task);
     }
 
-    public TaskPageDto getTasks(int page, int pageSize) {
+    public TaskPageDto getTasks(int page, @Max(100) int pageSize) {
         Page<Task> taskPage = taskRepository.findAll(PageRequest.of(page, pageSize));
         List<Task> taskList = taskPage.get().map(x -> x.add(
                 linkTo(methodOn(TaskController.class).getOneTask(x.getId())).withSelfRel())).toList();
