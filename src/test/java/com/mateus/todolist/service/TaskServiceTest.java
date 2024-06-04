@@ -75,6 +75,8 @@ class TaskServiceTest {
         assertEquals(taskMapper.toTaskDto(updatedTask), newTask);
     }
 
+
+
     @Test
     @DisplayName("Should throw TaskNotFoundException when don't have any task with the passed id to delete")
     void deleteThrowsTaskNotFoundException() {
