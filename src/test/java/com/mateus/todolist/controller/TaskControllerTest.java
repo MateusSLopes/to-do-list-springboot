@@ -1,13 +1,12 @@
 package com.mateus.todolist.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mateus.todolist.domain.Task;
 import com.mateus.todolist.domain.enums.TaskStatus;
 import com.mateus.todolist.dto.TaskDto;
 import com.mateus.todolist.dto.TaskPageDto;
-import com.mateus.todolist.exception.TaskNotFoundException;
 import com.mateus.todolist.service.TaskService;
+import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -29,6 +27,7 @@ import java.util.Collections;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -45,7 +44,6 @@ class TaskControllerTest {
     @Autowired
     ObjectMapper objectMapper;
 
-    @Autowired
     MockMvc mockMvc;
 
     @BeforeEach
@@ -60,7 +58,7 @@ class TaskControllerTest {
     }
 
     @Test
-    @DisplayName("Should return a task with Http status OK")
+    @DisplayName("Should return a task in the response content with Http status OK")
     void getOneTaskSuccess() throws Exception {
         when(service.findById(1L)).thenReturn(task);
 
@@ -68,28 +66,28 @@ class TaskControllerTest {
                         get("/tasks/{id}", "1")
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andReturn();
+                .andExpect(content().string("{\"id\":1,\"title\":\"name of task\",\"description\":\"desc\",\"taskStatus\":\"DONE\",\"links\":[]}"));
 
         verify(service).findById(1L);
         verifyNoMoreInteractions(service);
     }
 
     @Test
-    @DisplayName("Should return a task page with a list of tasks")
+    @DisplayName("Should return a task page with a list of tasks in the response content")
     void getAllTasksWithDefaultValues() throws Exception {
         var taskPageDto = new TaskPageDto(Collections.singletonList(task), 1, 1);
         when(service.getTasks(0, 10)).thenReturn(taskPageDto);
 
         mockMvc.perform(get("/tasks"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andReturn();
+                .andExpect(content().string("{\"tasks\":[{\"id\":1,\"title\":\"name of task\",\"description\":\"desc\",\"taskStatus\":\"DONE\",\"links\":[]}],\"totalPages\":1,\"totalElements\":1}"));
 
         verify(service).getTasks(0, 10);
         verifyNoMoreInteractions(service);
     }
 
     @Test
-    @DisplayName("Should return a task page with a list of tasks, where the page and pageSize are passed as a parameter")
+    @DisplayName("Should return a task page with a list of tasks in the response content, where the page and pageSize are passed as a parameter")
     void getAllTasksWithParamValues() throws Exception {
         var taskPageDto = new TaskPageDto(Collections.singletonList(task), 1, 1);
         when(service.getTasks(0, 90)).thenReturn(taskPageDto);
@@ -98,14 +96,14 @@ class TaskControllerTest {
                 .param("pageSize", "90");
         mockMvc.perform(request)
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andReturn();
+                .andExpect(content().string("{\"tasks\":[{\"id\":1,\"title\":\"name of task\",\"description\":\"desc\",\"taskStatus\":\"DONE\",\"links\":[]}],\"totalPages\":1,\"totalElements\":1}"));
 
         verify(service).getTasks(0, 90);
         verifyNoMoreInteractions(service);
     }
 
     @Test
-    @DisplayName("Should save a task with success")
+    @DisplayName("Should save a task with success and return the task in the response content")
     void saveTaskSuccess() throws Exception {
         var taskDto = new TaskDto("name", "description", TaskStatus.IN_PROGRESS);
         var returnedTask = Task.TaskBuilder.builder()
@@ -121,7 +119,7 @@ class TaskControllerTest {
                 .content(objectMapper.writeValueAsString(taskDto));
         mockMvc.perform(request)
                 .andExpect(MockMvcResultMatchers.status().isCreated())
-                .andReturn();
+                .andExpect(content().string(objectMapper.writeValueAsString(returnedTask)));
 
         verify(service).save(taskDto);
         verifyNoMoreInteractions(service);
@@ -133,14 +131,14 @@ class TaskControllerTest {
 
         mockMvc.perform(delete("/tasks/{id}", 1))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andReturn();
+                .andExpect(content().string("Task deleted successfully"));
 
         verify(service).delete(1L);
         verifyNoMoreInteractions(service);
     }
 
     @Test
-    @DisplayName("Should update a task successfully")
+    @DisplayName("Should update a task successfully and return the new task in the response content")
     void updateTaskSuccess() throws Exception {
         var newTaskDto = new TaskDto("Updated", "Up", TaskStatus.IN_PROGRESS);
         var newTask = Task.TaskBuilder.builder()
@@ -149,13 +147,14 @@ class TaskControllerTest {
                 .description(newTaskDto.description())
                 .taskStatus(newTaskDto.taskStatus())
                 .build();
+
         when(service.update(1L, newTaskDto)).thenReturn(newTask);
 
         mockMvc.perform(put("/tasks/{id}", 1)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(newTaskDto)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andReturn();
+                .andExpect(content().string(objectMapper.writeValueAsString(newTask)));
 
         verify(service).update(1L, newTaskDto);
         verifyNoMoreInteractions(service);
