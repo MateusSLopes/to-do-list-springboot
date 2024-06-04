@@ -6,6 +6,7 @@ import com.mateus.todolist.domain.Task;
 import com.mateus.todolist.domain.enums.TaskStatus;
 import com.mateus.todolist.dto.TaskDto;
 import com.mateus.todolist.dto.TaskPageDto;
+import com.mateus.todolist.exception.TaskNotFoundException;
 import com.mateus.todolist.service.TaskService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -24,11 +27,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.Collections;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 class TaskControllerTest {
     @InjectMocks
@@ -39,6 +42,7 @@ class TaskControllerTest {
 
     Task task;
 
+    @Autowired
     ObjectMapper objectMapper;
 
     @Autowired
@@ -53,7 +57,6 @@ class TaskControllerTest {
                 .id(1L).title("name of task")
                 .description("desc")
                 .taskStatus(TaskStatus.DONE).build();
-        objectMapper = new ObjectMapper();
     }
 
     @Test
@@ -121,6 +124,40 @@ class TaskControllerTest {
                 .andReturn();
 
         verify(service).save(taskDto);
+        verifyNoMoreInteractions(service);
+    }
+
+    @Test
+    @DisplayName("Should delete a task successfully")
+    void deleteTaskSuccess() throws Exception{
+
+        mockMvc.perform(delete("/tasks/{id}", 1))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn();
+
+        verify(service).delete(1L);
+        verifyNoMoreInteractions(service);
+    }
+
+    @Test
+    @DisplayName("Should update a task successfully")
+    void updateTaskSuccess() throws Exception {
+        var newTaskDto = new TaskDto("Updated", "Up", TaskStatus.IN_PROGRESS);
+        var newTask = Task.TaskBuilder.builder()
+                .id(1L)
+                .title(newTaskDto.title())
+                .description(newTaskDto.description())
+                .taskStatus(newTaskDto.taskStatus())
+                .build();
+        when(service.update(1L, newTaskDto)).thenReturn(newTask);
+
+        mockMvc.perform(put("/tasks/{id}", 1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(newTaskDto)))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn();
+
+        verify(service).update(1L, newTaskDto);
         verifyNoMoreInteractions(service);
     }
 }
